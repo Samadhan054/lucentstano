@@ -25,7 +25,7 @@ const readDB = () => {
 const writeDB = (data) => fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
 
 // DB Connection Logic with Fallback
-mongoose.connect(process.env.MONGO_URI, { family: 4 })
+mongoose.connect(process.env.MONGODB_URI, { family: 4 })
   .then(() => {
       console.log('✅ Connected to MongoDB Atlas');
       dbMode = 'Atlas';
@@ -162,10 +162,6 @@ app.post('/api/login', async (req, res) => {
     } else {
         res.status(401).json({ error: 'Invalid credentials' });
     }
-});
-
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
 });
 
 module.exports = app;
