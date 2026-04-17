@@ -27,7 +27,7 @@ const StudentDashboard = ({ user, onLogout }) => {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/materials')
+    fetch('/api/materials')
       .then(res => res.json())
       .then(data => setMaterials(data))
       .catch(err => console.error("Error loading materials:", err));
@@ -196,7 +196,7 @@ const StudentDashboard = ({ user, onLogout }) => {
                     </div>
                     <audio 
                       ref={audioRef} 
-                      src={`http://localhost:5000${selectedMaterial.audioPath}`} 
+                      src={selectedMaterial.audioPath} 
                       autoPlay 
                       onEnded={handleAudioEnd}
                       className="hidden"

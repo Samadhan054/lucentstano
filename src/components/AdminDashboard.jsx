@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Users, FileAudio, LayoutDashboard, LogOut, Trash2, Save, Upload } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 const AdminDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('materials');
