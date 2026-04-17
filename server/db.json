@@ -1,0 +1,39 @@
+{
+  "materials": [
+    {
+      "_id": "2d6c0ef7-f239-4352-94fb-de25a1cef166",
+      "title": "Wid Life",
+      "language": "English",
+      "speed": "60",
+      "text": "Wildlife refers to animals living freely in their natural environments such as forests, grasslands, oceans, and deserts. These animals, ranging from tiny insects to large mammals like elephants and tigers, play an important role in maintaining ecological balance. They contribute to processes like pollination, seed dispersal, and controlling food chains. However, wildlife today faces serious threats due to deforestation, pollution, climate change, and illegal hunting. Protecting wildlife is essential not only for preserving biodiversity but also for ensuring a healthy environment for future generations.\r\n",
+      "audioPath": "/uploads/1776257119480.mp3",
+      "createdAt": "2026-04-15T12:45:19.502Z"
+    },
+    {
+      "_id": "95ec03f5-e1ef-41d6-8df3-812317f5eefc",
+      "title": "वन्यजीव",
+      "language": "Marathi",
+      "speed": "60",
+      "text": "वन्यजीव म्हणजे जंगल, गवताळ प्रदेश, समुद्र आणि वाळवंट यांसारख्या नैसर्गिक वातावरणात मुक्तपणे राहणारे प्राणी. लहान कीटकांपासून ते हत्ती आणि वाघांसारख्या मोठ्या सस्तन प्राण्यांपर्यंत सर्व प्राणी पर्यावरणाचा समतोल राखण्यात महत्त्वाची भूमिका बजावतात. ते परागीकरण, बियांचे प्रसारण आणि अन्नसाखळी नियंत्रित करण्यास मदत करतात. परंतु आज वन्यजीवांना जंगलतोड, प्रदूषण, हवामान बदल आणि बेकायदेशीर शिकार यांसारख्या गंभीर धोके निर्माण झाले आहेत. जैवविविधता जपण्यासाठी आणि भविष्यातील पिढ्यांसाठी निरोगी पर्यावरण राखण्यासाठी वन्यजीवांचे संरक्षण करणे अत्यंत आवश्यक आहे.",
+      "audioPath": "/uploads/1776258302739.mp3",
+      "createdAt": "2026-04-15T13:05:02.766Z"
+    }
+  ],
+  "students": [
+    {
+      "_id": "4c48054e-9447-4225-9ac8-cd9cf02af342",
+      "email": "adityabirare01@gmail.com",
+      "password": "Ravans143",
+      "createdAt": "2026-04-15T13:25:09.446Z"
+    },
+    {
+      "_id": "25b3bbff-48d0-4761-8618-179b74507356",
+      "email": "samadhanbodhane@gmail.com",
+      "password": "qwerty",
+      "access": [
+        "English"
+      ],
+      "createdAt": "2026-04-15T13:28:24.894Z"
+    }
+  ]
+}

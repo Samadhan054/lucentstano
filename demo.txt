@@ -1,0 +1,13 @@
+# Stenography projects
+
+Roles
+    - Admin
+    - Users
+
+## Admin
+    - login 
+    - create new students by username, email, password
+    - can import audio files with title
+    - alos decide speed like 30, 60, 80, 100
+    - alos custome speed options
+    - 
