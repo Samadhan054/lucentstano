@@ -12,26 +12,35 @@ const PORT = process.env.PORT || 5000;
 
 let dbMode = 'Atlas';
 
-// File DB Helpers
-const DB_PATH = path.join(__dirname, 'db.json');
+// File DB Helpers (Note: Local file storage is not persistent on Vercel)
+const DB_PATH = path.join(process.cwd(), 'server', 'db.json');
 const readDB = () => {
     if (!fs.existsSync(DB_PATH)) {
         const initial = { materials: [], students: [] };
-        fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
         return initial;
     }
     return JSON.parse(fs.readFileSync(DB_PATH));
 };
-const writeDB = (data) => fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+const writeDB = (data) => {
+    // Note: This only works locally. Vercel filesystem is read-only or ephemeral.
+    try {
+        fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+    } catch (e) {
+        console.error("Vercel File System is read-only. Persistent changes require MongoDB Atlas.");
+    }
+};
 
 // DB Connection Logic with Fallback
-mongoose.connect(process.env.MONGODB_URI, { family: 4 })
+mongoose.connect(process.env.MONGODB_URI, { 
+    family: 4,
+    serverSelectionTimeoutMS: 5000 // Give up quickly if connection is blocked
+})
   .then(() => {
       console.log('✅ Connected to MongoDB Atlas');
       dbMode = 'Atlas';
   })
   .catch(err => {
-      console.log('⚠️ Atlas connection blocked by network. Switching to Local File Database.');
+      console.log('⚠️ Atlas connection failed. Local File Database active (Read-Only on Vercel).');
       dbMode = 'File';
   });
 
@@ -49,23 +58,34 @@ const StudentModel = mongoose.model('Student', StudentSchema);
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'server', 'uploads')));
 
 // Routes
 app.get('/api/status', (req, res) => res.json({ mode: dbMode }));
 
 app.post('/api/materials', multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-            const dir = path.join(__dirname, 'uploads');
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-            cb(null, dir);
-        },
-        filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-    })
+    storage: multer.memoryStorage() // Better for Vercel functions
 }).single('audio'), async (req, res) => {
     const { title, language, speed, text } = req.body;
-    const materialData = { title, language, speed, text, audioPath: req.file ? `/uploads/${req.file.filename}` : '', createdAt: new Date() };
+    
+    // Note: Local file storage is not persistent on Vercel. 
+    // For a real production app on Vercel, use Cloudinary or S3 for audio.
+    let audioPath = '';
+    if (req.file) {
+        // Fallback for local dev
+        const filename = Date.now() + path.extname(req.file.originalname);
+        const uploadDir = path.join(process.cwd(), 'server', 'uploads');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        
+        try {
+            fs.writeFileSync(path.join(uploadDir, filename), req.file.buffer);
+            audioPath = `/uploads/${filename}`;
+        } catch (e) {
+            console.error("Upload failed: Vercel storage is read-only.");
+        }
+    }
+
+    const materialData = { title, language, speed, text, audioPath, createdAt: new Date() };
 
     if (dbMode === 'Atlas') {
         try {
@@ -166,8 +186,7 @@ app.post('/api/login', async (req, res) => {
 
 if (require.main === module) {
     app.listen(PORT, () => {
-        console.log(`🚀 Server running locally on http://localhost:${PORT}`);
-        console.log(`📁 Database Mode: ${dbMode}`);
+        console.log(`🚀 Server running on port ${PORT}`);
     });
 }
 
