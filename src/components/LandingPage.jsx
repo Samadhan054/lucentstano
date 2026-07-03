@@ -32,13 +32,17 @@ const LandingPage = ({ onOpenLogin }) => {
       {/* Navigation */}
       <nav className="w-full max-w-7xl px-8 py-6 flex justify-between items-center z-50">
         <motion.div 
-          initial={{ x: -50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          className="flex items-center gap-2"
-        >
-          <PenTool className="text-indigo-400 w-8 h-8" />
-          <span className="text-2xl font-bold tracking-tighter text-white">LUCENT STANO</span>
-        </motion.div>
+        initial={{ x: -50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        className="flex items-center gap-3"
+      >
+        <img 
+          src="/assets/logo.png" 
+          alt="LUCENT STANO Logo" 
+          className="w-10 h-10 object-contain rounded-xl border border-white/10 shadow-md shadow-indigo-500/10" 
+        />
+        <span className="text-2xl font-bold tracking-tighter text-white">LUCENT STANO</span>
+      </motion.div>
         
         <motion.div 
           initial={{ x: 50, opacity: 0 }}
@@ -87,13 +91,13 @@ const LandingPage = ({ onOpenLogin }) => {
           variants={itemVariants}
           className="flex-1 relative"
         >
-          <div className="relative z-10 glass-dark p-2 rounded-3xl overflow-hidden shadow-2xl skew-y-3">
+          <div className="relative z-10 glass-dark p-8 rounded-[2rem] shadow-2xl border border-white/5 flex items-center justify-center aspect-square max-w-sm w-full mx-auto group overflow-hidden">
             <img 
-              src="/assets/steno.png" 
-              alt="Steno Essence" 
-              className="rounded-2xl w-full h-auto object-cover"
+              src="/assets/logo.png" 
+              alt="LucentSteno Logo" 
+              className="w-full h-full object-contain rounded-2xl drop-shadow-[0_0_20px_rgba(99,102,241,0.3)] group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 via-transparent to-purple-500/10 pointer-events-none"></div>
           </div>
           {/* Decorative floating card */}
           <motion.div 

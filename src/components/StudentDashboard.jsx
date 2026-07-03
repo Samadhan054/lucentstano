@@ -92,8 +92,12 @@ const StudentDashboard = ({ user, onLogout }) => {
       {/* Header */}
       <nav className="max-w-6xl mx-auto flex justify-between items-center mb-12">
         <div className="flex items-center gap-3">
-          <Languages className="text-indigo-400" />
-          <h1 className="text-2xl font-bold tracking-tight">STUDent PORTAL</h1>
+          <img 
+            src="/assets/logo.png" 
+            alt="LUCENT STANO Logo" 
+            className="w-8 h-8 object-contain rounded-lg border border-white/10 shadow-md shadow-indigo-500/10" 
+          />
+          <h1 className="text-2xl font-bold tracking-tight uppercase">Student Portal</h1>
         </div>
         <div className="flex items-center gap-6">
           <span className="text-slate-400">Welcome, <span className="text-white font-medium">{user.email}</span></span>
