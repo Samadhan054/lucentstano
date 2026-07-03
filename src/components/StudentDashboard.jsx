@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, MapPin, FastForward, Play, Pause, RotateCcw, Send, AlertTriangle, CheckCircle2, XCircle, Info, ChevronRight, Languages } from 'lucide-react';
+import { BookOpen, MapPin, FastForward, Play, Pause, RotateCcw, Send, AlertTriangle, CheckCircle2, XCircle, Info, ChevronRight, ChevronLeft, Languages, Volume2 } from 'lucide-react';
 import { compareText } from '../utils/textComparison';
 import { transliterateSentence } from '../utils/marathiTransliteration';
 
@@ -18,6 +18,8 @@ const StudentDashboard = ({ user, onLogout }) => {
   const [lastChar, setLastChar] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const userInputRef = useRef(userInput);
 
   useEffect(() => {
@@ -114,8 +116,48 @@ const StudentDashboard = ({ user, onLogout }) => {
     setPlaybackSpeed(speed);
   };
 
+  const skipBackward = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
+    }
+  };
+
+  const skipForward = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.min(duration, audioRef.current.currentTime + 10);
+    }
+  };
+
+  const handleSeek = (e) => {
+    const newTime = parseFloat(e.target.value);
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const formatTime = (timeInSeconds) => {
+    if (isNaN(timeInSeconds)) return '00:00';
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   const handleSubmit = (forcedInput) => {
-    const textToCompare = forcedInput !== undefined ? forcedInput : userInput;
+    // Fix React Click event object being treated as custom input string
+    const textToCompare = typeof forcedInput === 'string' ? forcedInput : userInput;
     const result = compareText(selectedMaterial.text, textToCompare);
     setComparisonResult(result);
     setStep('results');
@@ -252,48 +294,90 @@ const StudentDashboard = ({ user, onLogout }) => {
               <div className="glass-dark p-8 rounded-[2rem] border border-white/5 text-center relative overflow-hidden">
                 {!isFinished ? (
                    <>
-                    <h3 className="text-2xl font-bold mb-4">Listening Mode: {selectedMaterial.title}</h3>
-                    
-                    <div className="flex flex-col items-center gap-6 mb-8 mt-4">
-                      {/* Visual Indicator */}
-                      <div className={`w-20 h-20 rounded-full flex items-center justify-center bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 ${isPlaying ? 'animate-pulse' : ''}`}>
-                        {isPlaying ? <Play size={36} className="animate-pulse" /> : <Pause size={36} />}
+                    <div className="glass-dark max-w-xl mx-auto p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left mb-8">
+                      {/* Header Row: Metas + Logo */}
+                      <div className="flex justify-between items-center gap-6 mb-6">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+                            <Volume2 size={14} className="animate-pulse" />
+                            Lucent Steno Shorthand Player
+                          </div>
+                          <h3 className="text-2xl font-black text-white tracking-tight line-clamp-1">
+                            {selectedMaterial.title}
+                          </h3>
+                          <p className="text-slate-400 text-sm">
+                            Speed: <span className="text-indigo-300 font-bold">{selectedMaterial.speed} WPM</span>
+                          </p>
+                        </div>
+                        
+                        <img 
+                          src="/assets/logo.png" 
+                          alt="Logo" 
+                          className="w-16 h-16 rounded-2xl object-contain bg-slate-950/40 p-2 border border-white/10 shadow-md shadow-indigo-500/10"
+                        />
                       </div>
 
-                      {/* Main Audio Controls */}
-                      <div className="flex items-center gap-6 bg-slate-900/40 p-4 px-6 rounded-2xl border border-white/5 shadow-inner">
-                        {/* Restart Button */}
-                        <button 
-                          onClick={restartAudio} 
-                          title="Restart Audio"
-                          className="p-3 bg-white/5 rounded-xl hover:bg-white/10 hover:text-indigo-400 transition-colors active:scale-95"
-                        >
-                          <RotateCcw size={20} />
-                        </button>
+                      {/* Controls Row */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-4">
+                          {/* Seek Backward 10s */}
+                          <button 
+                            onClick={skipBackward}
+                            className="p-3 bg-white/5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-all active:scale-95"
+                            title="Rewind 10s"
+                          >
+                            <ChevronLeft size={20} className="stroke-[2.5]" />
+                          </button>
 
-                        {/* Play/Pause Button */}
-                        <button 
-                          onClick={togglePlay} 
-                          className="p-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center"
-                        >
-                          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-                        </button>
+                          {/* Play / Pause Toggle */}
+                          <button 
+                            onClick={togglePlay}
+                            className="p-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl transition-all shadow-lg shadow-indigo-500/30 active:scale-95 flex items-center justify-center"
+                          >
+                            {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+                          </button>
 
-                        {/* Speed Select Controls */}
-                        <div className="flex flex-col gap-1 items-start">
-                          <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Speed</label>
+                          {/* Seek Forward 10s */}
+                          <button 
+                            onClick={skipForward}
+                            className="p-3 bg-white/5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-all active:scale-95"
+                            title="Forward 10s"
+                          >
+                            <ChevronRight size={20} className="stroke-[2.5]" />
+                          </button>
+                        </div>
+
+                        {/* Playback Speed Control */}
+                        <div className="flex items-center gap-2 bg-slate-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs">
+                          <span className="text-slate-400 font-semibold uppercase tracking-wider mr-1">Speed</span>
                           <select 
                             value={playbackSpeed} 
                             onChange={(e) => handleSpeedChange(parseFloat(e.target.value))} 
-                            className="bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer text-white"
+                            className="bg-transparent border-none text-indigo-400 font-bold focus:outline-none cursor-pointer text-white font-sans"
                           >
-                            <option value="0.5">0.5x</option>
-                            <option value="0.75">0.75x</option>
-                            <option value="1">1.0x</option>
-                            <option value="1.25">1.25x</option>
-                            <option value="1.5">1.5x</option>
-                            <option value="2">2.0x</option>
+                            <option value="0.5" className="bg-slate-900">0.5x</option>
+                            <option value="0.75" className="bg-slate-900">0.75x</option>
+                            <option value="1" className="bg-slate-900">1.0x</option>
+                            <option value="1.25" className="bg-slate-900">1.25x</option>
+                            <option value="1.5" className="bg-slate-900">1.5x</option>
+                            <option value="2" className="bg-slate-900">2.0x</option>
                           </select>
+                        </div>
+                      </div>
+
+                      {/* Scrubber Progress Slider */}
+                      <div className="space-y-2">
+                        <input 
+                          type="range"
+                          min="0"
+                          max={duration || 100}
+                          value={currentTime}
+                          onChange={handleSeek}
+                          className="w-full accent-indigo-500 bg-white/10 rounded-lg appearance-none h-1.5 cursor-pointer outline-none focus:outline-none"
+                        />
+                        <div className="flex justify-between text-xs text-slate-400 font-mono">
+                          <span>{formatTime(currentTime)}</span>
+                          <span>{formatTime(duration)}</span>
                         </div>
                       </div>
                     </div>
@@ -304,10 +388,12 @@ const StudentDashboard = ({ user, onLogout }) => {
                       autoPlay 
                       onPlay={() => setIsPlaying(true)}
                       onPause={() => setIsPlaying(false)}
+                      onTimeUpdate={handleTimeUpdate}
+                      onLoadedMetadata={handleLoadedMetadata}
                       onEnded={handleAudioEnd}
                       className="hidden"
                     />
-                    <p className="text-indigo-400 font-medium animate-bounce italic">Listen carefully and visualize the strokes...</p>
+                    <p className="text-indigo-400 font-medium animate-bounce italic text-center">Listen carefully and visualize the strokes...</p>
                    </>
                 ) : isFinished === true ? (
                   <div className="space-y-6">
