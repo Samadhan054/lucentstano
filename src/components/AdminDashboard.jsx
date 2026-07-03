@@ -47,30 +47,82 @@ const AdminDashboard = ({ onLogout }) => {
     if (!audioFile) return alert("Please select an audio file");
     
     setIsLoading(true);
-    const formData = new FormData();
-    formData.append('title', newMaterial.title);
-    formData.append('language', newMaterial.language);
-    formData.append('speed', newMaterial.speed);
-    formData.append('text', newMaterial.text);
-    formData.append('audio', audioFile);
-
     try {
-      const res = await fetch(`${API_BASE}/materials`, {
+      // 1. Ask backend for upload configuration (Supabase signed URL or local mode)
+      const uploadUrlRes = await fetch(`${API_BASE}/materials/upload-url`, {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: audioFile.name, contentType: audioFile.type })
       });
-      if (res.ok) {
-        alert('Material added and uploaded successfully!');
-        setNewMaterial({ title: '', language: 'English', speed: '30', text: '' });
-        setAudioFile(null);
-        fetchData();
+      
+      if (!uploadUrlRes.ok) {
+        const errData = await uploadUrlRes.json();
+        throw new Error(errData.error || 'Failed to get upload configuration');
+      }
+      
+      const uploadInfo = await uploadUrlRes.json();
+      
+      if (uploadInfo.localMode) {
+        // Local File Fallback: Use standard multipart form data
+        const formData = new FormData();
+        formData.append('title', newMaterial.title);
+        formData.append('language', newMaterial.language);
+        formData.append('speed', newMaterial.speed);
+        formData.append('text', newMaterial.text);
+        formData.append('audio', audioFile);
+
+        const res = await fetch(`${API_BASE}/materials`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (res.ok) {
+          alert('Material added successfully (Local File Mode)!');
+          setNewMaterial({ title: '', language: 'English', speed: '30', text: '' });
+          setAudioFile(null);
+          fetchData();
+        } else {
+          const data = await res.json();
+          alert('Failed to save: ' + (data.error || 'Unknown error'));
+        }
       } else {
-        const data = await res.json();
-        alert('Failed to save: ' + (data.error || 'Unknown error'));
+        // Supabase Direct Upload: Upload file directly to Supabase Storage via PUT
+        const storageRes = await fetch(uploadInfo.signedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': audioFile.type },
+          body: audioFile
+        });
+        
+        if (!storageRes.ok) {
+          throw new Error('Failed to upload audio file directly to Supabase storage');
+        }
+
+        // Save material details with the public audio URL to the backend database
+        const res = await fetch(`${API_BASE}/materials`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newMaterial.title,
+            language: newMaterial.language,
+            speed: newMaterial.speed,
+            text: newMaterial.text,
+            audioPath: uploadInfo.publicUrl
+          })
+        });
+
+        if (res.ok) {
+          alert('Material added and uploaded successfully!');
+          setNewMaterial({ title: '', language: 'English', speed: '30', text: '' });
+          setAudioFile(null);
+          fetchData();
+        } else {
+          const data = await res.json();
+          alert('Failed to save: ' + (data.error || 'Unknown error'));
+        }
       }
     } catch (e) {
-      console.error("Upload error:", e);
-      alert('Network Error: Make sure the server is running on Port 5000');
+      console.error("Upload error details:", e);
+      alert('Upload failed: ' + e.message);
     } finally {
       setIsLoading(false);
     }

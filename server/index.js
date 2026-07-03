@@ -74,13 +74,49 @@ app.get('/api/status', (req, res) => res.json({ mode: dbMode }));
 // Use Memory Storage for Multer to easily switch between Supabase Storage & disk fallback
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.post('/api/materials', upload.single('audio'), async (req, res) => {
-    const { title, language, speed, text } = req.body;
-    let audioPath = '';
+app.post('/api/materials/upload-url', async (req, res) => {
+    const { filename, contentType } = req.body;
+    if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
     try {
         if (dbMode === 'Supabase') {
-            if (req.file) {
+            const filePath = `uploads/${Date.now()}_${filename}`;
+            const { data, error } = await supabase.storage
+                .from('audio-materials')
+                .createSignedUploadUrl(filePath);
+
+            if (error) throw error;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('audio-materials')
+                .getPublicUrl(filePath);
+
+            res.json({
+                signedUrl: data.signedUrl,
+                publicUrl: publicUrl,
+                path: filePath
+            });
+        } else {
+            const localFilename = `${Date.now()}_${filename}`;
+            res.json({
+                localMode: true,
+                filename: localFilename,
+                publicUrl: `/uploads/${localFilename}`
+            });
+        }
+    } catch (e) {
+        console.error("Error generating signed upload URL:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/materials', upload.single('audio'), async (req, res) => {
+    const { title, language, speed, text, audioPath: directAudioPath } = req.body;
+    let audioPath = directAudioPath || '';
+
+    try {
+        if (dbMode === 'Supabase') {
+            if (!audioPath && req.file) {
                 const filename = `uploads/${Date.now()}_${req.file.originalname}`;
                 const { data: storageData, error: storageError } = await supabase.storage
                     .from('audio-materials')
