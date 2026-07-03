@@ -94,7 +94,7 @@ const StudentDashboard = ({ user, onLogout }) => {
         <div className="flex items-center gap-3">
           <img 
             src="/assets/logo.png" 
-            alt="LUCENT STANO Logo" 
+            alt="LUCENT STENO Logo" 
             className="w-8 h-8 object-contain rounded-lg border border-white/10 shadow-md shadow-indigo-500/10" 
           />
           <h1 className="text-2xl font-bold tracking-tight uppercase">Student Portal</h1>

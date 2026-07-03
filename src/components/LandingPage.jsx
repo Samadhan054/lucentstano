@@ -38,10 +38,10 @@ const LandingPage = ({ onOpenLogin }) => {
       >
         <img 
           src="/assets/logo.png" 
-          alt="LUCENT STANO Logo" 
+          alt="LUCENT STENO Logo" 
           className="w-10 h-10 object-contain rounded-xl border border-white/10 shadow-md shadow-indigo-500/10" 
         />
-        <span className="text-2xl font-bold tracking-tighter text-white">LUCENT STANO</span>
+        <span className="text-2xl font-bold tracking-tighter text-white">LUCENT STENO</span>
       </motion.div>
         
         <motion.div 
@@ -67,7 +67,7 @@ const LandingPage = ({ onOpenLogin }) => {
               Master the Art of <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Shorthand</span>
             </h1>
             <p className="mt-6 text-xl text-slate-400 max-w-2xl leading-relaxed">
-              Unlock the secrets of efficient stenography with Lucent Stano. 
+              Unlock the secrets of efficient stenography with Lucent Steno. 
               The ultimate platform for students to reach professional speeds with precision.
             </p>
           </motion.div>
@@ -194,7 +194,7 @@ const LandingPage = ({ onOpenLogin }) => {
 
       {/* Footer Decoration */}
       <footer className="w-full py-8 text-center border-t border-white/5 z-10">
-        <p className="text-slate-500 text-sm">© 2026 Lucent Stano Academy. Precision in Every Stroke.</p>
+        <p className="text-slate-500 text-sm">© 2026 Lucent Steno Academy. Precision in Every Stroke.</p>
       </footer>
     </div>
   );
