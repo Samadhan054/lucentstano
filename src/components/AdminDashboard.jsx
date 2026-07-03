@@ -10,7 +10,7 @@ const AdminDashboard = ({ onLogout }) => {
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  const [newMaterial, setNewMaterial] = useState({ title: '', language: 'English', speed: '30', text: '' });
+  const [newMaterial, setNewMaterial] = useState({ title: '', language: 'English', speed: '30', text: '', duration: 0 });
   const [audioFile, setAudioFile] = useState(null);
   const [newStudent, setNewStudent] = useState({ email: '', password: '', access: ['English', 'Marathi'] });
   const [isServerUp, setIsServerUp] = useState(true);
@@ -69,6 +69,7 @@ const AdminDashboard = ({ onLogout }) => {
         formData.append('language', newMaterial.language);
         formData.append('speed', newMaterial.speed);
         formData.append('text', newMaterial.text);
+        formData.append('duration', newMaterial.duration || 0);
         formData.append('audio', audioFile);
 
         const res = await fetch(`${API_BASE}/materials`, {
@@ -78,7 +79,7 @@ const AdminDashboard = ({ onLogout }) => {
         
         if (res.ok) {
           alert('Material added successfully (Local File Mode)!');
-          setNewMaterial({ title: '', language: 'English', speed: '30', text: '' });
+          setNewMaterial({ title: '', language: 'English', speed: '30', text: '', duration: 0 });
           setAudioFile(null);
           fetchData();
         } else {
@@ -106,13 +107,14 @@ const AdminDashboard = ({ onLogout }) => {
             language: newMaterial.language,
             speed: newMaterial.speed,
             text: newMaterial.text,
-            audioPath: uploadInfo.publicUrl
+            audioPath: uploadInfo.publicUrl,
+            duration: newMaterial.duration || 0
           })
         });
 
         if (res.ok) {
           alert('Material added and uploaded successfully!');
-          setNewMaterial({ title: '', language: 'English', speed: '30', text: '' });
+          setNewMaterial({ title: '', language: 'English', speed: '30', text: '', duration: 0 });
           setAudioFile(null);
           fetchData();
         } else {
@@ -217,7 +219,7 @@ const AdminDashboard = ({ onLogout }) => {
                   <label className="text-sm text-slate-400">Title</label>
                   <input required value={newMaterial.title} onChange={e => setNewMaterial({...newMaterial, title: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="e.g. Speed Practice #1" />
                 </div>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Language</label>
                     <select value={newMaterial.language} onChange={e => setNewMaterial({...newMaterial, language: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none">
@@ -230,6 +232,10 @@ const AdminDashboard = ({ onLogout }) => {
                     <select value={newMaterial.speed} onChange={e => setNewMaterial({...newMaterial, speed: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none">
                       <option>30</option><option>60</option><option>80</option><option>90</option><option>100</option><option>120</option>
                     </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">Time Limit (mins)</label>
+                    <input type="number" min="0" value={newMaterial.duration || ''} onChange={e => setNewMaterial({...newMaterial, duration: parseInt(e.target.value, 10) || 0})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="0 for no limit" />
                   </div>
                 </div>
                 <div className="space-y-2">

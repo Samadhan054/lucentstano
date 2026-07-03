@@ -56,9 +56,11 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
             </button>
 
             <div className="flex flex-col items-center mb-8">
-              <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-4">
-                <LogIn className="text-indigo-400 w-8 h-8" />
-              </div>
+              <img 
+                src="/assets/logo.png" 
+                alt="LucentSteno Logo" 
+                className="w-20 h-20 rounded-3xl object-contain mb-4 shadow-lg shadow-indigo-500/20 border border-white/10" 
+              />
               <h2 className="text-3xl font-bold text-white">Welcome Back</h2>
               <p className="text-slate-400 mt-2">Sign in to your account</p>
             </div>

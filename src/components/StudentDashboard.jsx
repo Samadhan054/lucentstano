@@ -16,6 +16,12 @@ const StudentDashboard = ({ user, onLogout }) => {
   const [showWarning, setShowWarning] = useState(false);
   const [userInput, setUserInput] = useState('');
   const [lastChar, setLastChar] = useState('');
+  const [timeLeft, setTimeLeft] = useState(0);
+  const userInputRef = useRef(userInput);
+
+  useEffect(() => {
+    userInputRef.current = userInput;
+  }, [userInput]);
 
   const marathiMapping = {
     'a': 'अ', 'aa': 'आ', 'i': 'इ', 'ee': 'ई', 'u': 'उ', 'oo': 'ऊ', 'e': 'ए', 'ai': 'ऐ', 'o': 'ओ', 'au': 'औ', 'am': 'अं', 'ah': 'अः',
@@ -32,6 +38,24 @@ const StudentDashboard = ({ user, onLogout }) => {
       .then(data => setMaterials(data))
       .catch(err => console.error("Error loading materials:", err));
   }, []);
+
+  useEffect(() => {
+    if (isFinished === 'writing' && selectedMaterial?.duration > 0) {
+      setTimeLeft(selectedMaterial.duration * 60);
+      
+      const timerId = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerId);
+            handleSubmit(userInputRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timerId);
+    }
+  }, [isFinished, selectedMaterial]);
 
   const resetAll = () => {
     setStep('language');
@@ -56,8 +80,9 @@ const StudentDashboard = ({ user, onLogout }) => {
     setIsFinished(true);
   };
 
-  const handleSubmit = () => {
-    const result = compareText(selectedMaterial.text, userInput);
+  const handleSubmit = (forcedInput) => {
+    const textToCompare = forcedInput !== undefined ? forcedInput : userInput;
+    const result = compareText(selectedMaterial.text, textToCompare);
     setComparisonResult(result);
     setStep('results');
   };
@@ -232,7 +257,15 @@ const StudentDashboard = ({ user, onLogout }) => {
                   className="space-y-6"
                 >
                   <div className="flex justify-between items-center mb-2 px-2">
-                    <label className="text-lg font-bold">Transcription Area</label>
+                    <label className="text-lg font-bold flex items-center gap-4">
+                      Transcription Area
+                      {selectedMaterial?.duration > 0 && (
+                        <span className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                          Time Left: {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
+                        </span>
+                      )}
+                    </label>
                     <span className="text-slate-400 text-sm">{userInput.split(/\s+/).filter(Boolean).length} words</span>
                   </div>
                   <textarea
@@ -318,6 +351,7 @@ const StudentDashboard = ({ user, onLogout }) => {
                         {item.word}
                         {item.type === 'extra' && <span className="text-[10px] block opacity-70">extra</span>}
                         {item.type === 'missing' && <span className="text-[10px] block opacity-70">missing</span>}
+                        {item.type === 'case_mismatch' && <span className="text-[10px] block opacity-70">capital</span>}
                       </span>
                     ))}
                   </div>

@@ -52,7 +52,8 @@ const mapMaterial = (m) => ({
     speed: m.speed,
     text: m.text,
     audioPath: m.audio_path || '',
-    createdAt: m.created_at || new Date()
+    createdAt: m.created_at || new Date(),
+    duration: m.duration || 0
 });
 
 const mapStudent = (s) => ({
@@ -111,8 +112,9 @@ app.post('/api/materials/upload-url', async (req, res) => {
 });
 
 app.post('/api/materials', upload.single('audio'), async (req, res) => {
-    const { title, language, speed, text, audioPath: directAudioPath } = req.body;
+    const { title, language, speed, text, audioPath: directAudioPath, duration } = req.body;
     let audioPath = directAudioPath || '';
+    const durationVal = duration ? parseInt(duration, 10) : 0;
 
     try {
         if (dbMode === 'Supabase') {
@@ -139,7 +141,8 @@ app.post('/api/materials', upload.single('audio'), async (req, res) => {
                 language,
                 speed,
                 text,
-                audio_path: audioPath
+                audio_path: audioPath,
+                duration: durationVal
             }]).select();
 
             if (error) throw error;
@@ -162,6 +165,7 @@ app.post('/api/materials', upload.single('audio'), async (req, res) => {
                 speed, 
                 text, 
                 audioPath, 
+                duration: durationVal,
                 createdAt: new Date() 
             };
             db.materials.push(m);
