@@ -28,28 +28,15 @@ const readDB = () => {
 };
 const writeDB = (data) => fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
 
-// Initialize Supabase Client if keys are present
+// Initialize Supabase Client if keys are present (Synchronously for serverless parity)
 let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
     try {
         supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-        // Test connection
-        supabase.from('materials').select('id').limit(1)
-            .then(({ error }) => {
-                if (error) {
-                    console.log('⚠️ Supabase connection failed. Switching to Local File Database:', error.message);
-                    dbMode = 'File';
-                } else {
-                    console.log('✅ Connected to Supabase Database');
-                    dbMode = 'Supabase';
-                }
-            })
-            .catch(err => {
-                console.log('⚠️ Supabase test query failed. Switching to Local File Database.');
-                dbMode = 'File';
-            });
+        dbMode = 'Supabase';
+        console.log('✅ Supabase Client initialized successfully (Database Mode: Supabase)');
     } catch (err) {
-        console.log('⚠️ Supabase client initialization failed. Switching to Local File Database.');
+        console.log('⚠️ Supabase client initialization failed. Switching to Local File Database:', err.message);
         dbMode = 'File';
     }
 } else {
