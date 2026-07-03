@@ -1,14 +1,15 @@
-const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
-const multer = require('multer');
-const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-require('dotenv').config();
+import express from 'express';
+import { createClient } from '@supabase/supabase-js';
+import multer from 'multer';
+import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 let dbMode = 'File';
 
@@ -300,10 +301,4 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-    });
-}
-
-module.exports = app;
+export default app;
