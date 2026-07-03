@@ -17,6 +17,7 @@ const StudentDashboard = ({ user, onLogout }) => {
   const [userInput, setUserInput] = useState('');
   const [lastChar, setLastChar] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const userInputRef = useRef(userInput);
 
   useEffect(() => {
@@ -80,11 +81,45 @@ const StudentDashboard = ({ user, onLogout }) => {
     setIsFinished(true);
   };
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed, selectedMaterial, isFinished]);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const restartAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleSpeedChange = (speed) => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+    setPlaybackSpeed(speed);
+  };
+
   const handleSubmit = (forcedInput) => {
     const textToCompare = forcedInput !== undefined ? forcedInput : userInput;
     const result = compareText(selectedMaterial.text, textToCompare);
     setComparisonResult(result);
     setStep('results');
+    setIsFinished(true); // Stop timer
   };
 
   return (
@@ -218,15 +253,57 @@ const StudentDashboard = ({ user, onLogout }) => {
                 {!isFinished ? (
                    <>
                     <h3 className="text-2xl font-bold mb-4">Listening Mode: {selectedMaterial.title}</h3>
-                    <div className="flex justify-center gap-8 items-center mb-8">
-                      <div className={`w-24 h-24 rounded-full flex items-center justify-center bg-indigo-600/20 text-indigo-400 ${isPlaying ? 'animate-pulse' : ''}`}>
-                        <Play size={40} />
+                    
+                    <div className="flex flex-col items-center gap-6 mb-8 mt-4">
+                      {/* Visual Indicator */}
+                      <div className={`w-20 h-20 rounded-full flex items-center justify-center bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 ${isPlaying ? 'animate-pulse' : ''}`}>
+                        {isPlaying ? <Play size={36} className="animate-pulse" /> : <Pause size={36} />}
+                      </div>
+
+                      {/* Main Audio Controls */}
+                      <div className="flex items-center gap-6 bg-slate-900/40 p-4 px-6 rounded-2xl border border-white/5 shadow-inner">
+                        {/* Restart Button */}
+                        <button 
+                          onClick={restartAudio} 
+                          title="Restart Audio"
+                          className="p-3 bg-white/5 rounded-xl hover:bg-white/10 hover:text-indigo-400 transition-colors active:scale-95"
+                        >
+                          <RotateCcw size={20} />
+                        </button>
+
+                        {/* Play/Pause Button */}
+                        <button 
+                          onClick={togglePlay} 
+                          className="p-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center"
+                        >
+                          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                        </button>
+
+                        {/* Speed Select Controls */}
+                        <div className="flex flex-col gap-1 items-start">
+                          <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Speed</label>
+                          <select 
+                            value={playbackSpeed} 
+                            onChange={(e) => handleSpeedChange(parseFloat(e.target.value))} 
+                            className="bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer text-white"
+                          >
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1">1.0x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2.0x</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
+
                     <audio 
                       ref={audioRef} 
                       src={selectedMaterial.audioPath} 
                       autoPlay 
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
                       onEnded={handleAudioEnd}
                       className="hidden"
                     />
