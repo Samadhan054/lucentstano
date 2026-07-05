@@ -155,6 +155,25 @@ const StudentDashboard = ({ user, onLogout }) => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const saveLog = async (result) => {
+    try {
+      await fetch('/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_email: user.email,
+          material_title: selectedMaterial.title,
+          language: selectedMaterial.language,
+          speed: selectedMaterial.speed,
+          accuracy: result.accuracy,
+          mistakes: result.mistakes
+        })
+      });
+    } catch (err) {
+      console.error("Error saving progress log:", err);
+    }
+  };
+
   const handleSubmit = (forcedInput) => {
     // Fix React Click event object being treated as custom input string
     const textToCompare = typeof forcedInput === 'string' ? forcedInput : userInput;
@@ -162,6 +181,7 @@ const StudentDashboard = ({ user, onLogout }) => {
     setComparisonResult(result);
     setStep('results');
     setIsFinished(true); // Stop timer
+    saveLog(result);
   };
 
   return (

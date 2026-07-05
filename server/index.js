@@ -16,14 +16,16 @@ let dbMode = 'File';
 const DB_PATH = path.join(__dirname, 'db.json');
 const readDB = () => {
     if (!fs.existsSync(DB_PATH)) {
-        const initial = { materials: [], students: [] };
+        const initial = { materials: [], students: [], logs: [] };
         fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
         return initial;
     }
     try {
-        return JSON.parse(fs.readFileSync(DB_PATH));
+        const data = JSON.parse(fs.readFileSync(DB_PATH));
+        if (!data.logs) data.logs = [];
+        return data;
     } catch (e) {
-        return { materials: [], students: [] };
+        return { materials: [], students: [], logs: [] };
     }
 };
 const writeDB = (data) => fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
@@ -331,6 +333,74 @@ app.post('/api/login', async (req, res) => {
         }
     } catch (e) {
         console.error("Error checking login:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+const mapLog = (l) => ({
+    _id: l.id,
+    student_email: l.student_email,
+    material_title: l.material_title,
+    language: l.language,
+    speed: l.speed,
+    accuracy: l.accuracy,
+    mistakes: l.mistakes,
+    createdAt: l.created_at || new Date()
+});
+
+app.post('/api/logs', async (req, res) => {
+    const { student_email, material_title, language, speed, accuracy, mistakes } = req.body;
+    try {
+        if (dbMode === 'Supabase') {
+            const { data, error } = await supabase.from('practice_logs').insert([{
+                student_email,
+                material_title,
+                language,
+                speed,
+                accuracy: parseInt(accuracy, 10),
+                mistakes: parseInt(mistakes, 10)
+            }]).select();
+
+            if (error) throw error;
+            res.status(201).json(mapLog(data[0]));
+        } else {
+            const db = readDB();
+            const l = {
+                _id: uuidv4(),
+                student_email,
+                material_title,
+                language,
+                speed,
+                accuracy: parseInt(accuracy, 10),
+                mistakes: parseInt(mistakes, 10),
+                createdAt: new Date()
+            };
+            db.logs.push(l);
+            writeDB(db);
+            res.status(201).json(l);
+        }
+    } catch (e) {
+        console.error("Error creating progress log:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/logs', async (req, res) => {
+    try {
+        if (dbMode === 'Supabase') {
+            const { data, error } = await supabase
+                .from('practice_logs')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            res.json(data.map(mapLog));
+        } else {
+            const db = readDB();
+            res.json(db.logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+        }
+    } catch (e) {
+        console.error("Error fetching progress logs:", e);
         res.status(500).json({ error: e.message });
     }
 });

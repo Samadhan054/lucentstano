@@ -8,7 +8,12 @@ const AdminDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('materials');
   const [materials, setMaterials] = useState([]);
   const [students, setStudents] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [searchFilter, setSearchFilter] = useState('');
+  const [langFilter, setLangFilter] = useState('');
+  const [speedFilter, setSpeedFilter] = useState('');
   
   const [newMaterial, setNewMaterial] = useState({ title: '', language: 'English', speed: '30', text: '', duration: 0 });
   const [audioFile, setAudioFile] = useState(null);
@@ -31,7 +36,8 @@ const AdminDashboard = ({ onLogout }) => {
       if (!res.ok) throw new Error("Server responded with error");
       const data = await res.json();
       if (activeTab === 'materials') setMaterials(data);
-      else setStudents(data);
+      else if (activeTab === 'students') setStudents(data);
+      else if (activeTab === 'logs') setLogs(data);
       setIsServerUp(true);
     } catch (e) {
       console.error("Error fetching data:", e);
@@ -161,6 +167,13 @@ const AdminDashboard = ({ onLogout }) => {
     }
   };
 
+  const filteredLogs = logs.filter(log => {
+    const matchesSearch = !searchFilter || log.student_email.toLowerCase().includes(searchFilter.toLowerCase());
+    const matchesLang = !langFilter || log.language === langFilter;
+    const matchesSpeed = !speedFilter || log.speed === speedFilter;
+    return matchesSearch && matchesLang && matchesSpeed;
+  });
+
   return (
     <div className="min-h-screen gradient-bg text-white flex">
       {/* Sidebar - Same as before */}
@@ -185,6 +198,12 @@ const AdminDashboard = ({ onLogout }) => {
           >
             <Users size={20} /> Students
           </button>
+          <button 
+            onClick={() => setActiveTab('logs')}
+            className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${activeTab === 'logs' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-white/5'}`}
+          >
+            <LayoutDashboard size={20} /> Student Logs
+          </button>
         </nav>
 
         <button onClick={onLogout} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:text-red-400 hover:bg-red-400/5 transition-all mt-auto">
@@ -206,118 +225,221 @@ const AdminDashboard = ({ onLogout }) => {
           <p className="text-slate-400 mt-1">Manage your assets and student access in real-time.</p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Form Card */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-dark p-8 rounded-3xl border border-white/5 h-fit">
-            <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <Plus className="text-indigo-400" /> {activeTab === 'materials' ? 'New Material' : 'New Student'}
-            </h3>
+        {activeTab === 'logs' ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="glass-dark p-8 rounded-3xl border border-white/5 shadow-xl w-full animate-fade-in"
+          >
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+              <h3 className="text-2xl font-black flex items-center gap-3">
+                <LayoutDashboard className="text-indigo-400" /> Student Practice Logs
+              </h3>
+              
+              <div className="flex flex-wrap gap-4 w-full md:w-auto">
+                <input 
+                  type="text" 
+                  placeholder="Search by student email..." 
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  className="bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 w-full md:w-64 text-white"
+                />
+                
+                <select 
+                  value={langFilter}
+                  onChange={(e) => setLangFilter(e.target.value)}
+                  className="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer text-white"
+                >
+                  <option value="" className="bg-slate-900">All Languages</option>
+                  <option value="English" className="bg-slate-900">English</option>
+                  <option value="Marathi" className="bg-slate-900">Marathi</option>
+                </select>
 
-            {activeTab === 'materials' ? (
-              <form onSubmit={handleAddMaterial} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Title</label>
-                  <input required value={newMaterial.title} onChange={e => setNewMaterial({...newMaterial, title: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="e.g. Speed Practice #1" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-sm text-slate-400">Language</label>
-                    <select value={newMaterial.language} onChange={e => setNewMaterial({...newMaterial, language: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none">
-                      <option>English</option>
-                      <option>Marathi</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm text-slate-400">Speed (WPM)</label>
-                    <select value={newMaterial.speed} onChange={e => setNewMaterial({...newMaterial, speed: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none">
-                      <option>30</option><option>60</option><option>80</option><option>90</option><option>100</option><option>120</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm text-slate-400">Time Limit (mins)</label>
-                    <input type="number" min="0" value={newMaterial.duration || ''} onChange={e => setNewMaterial({...newMaterial, duration: parseInt(e.target.value, 10) || 0})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500" placeholder="0 for no limit" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Audio File (Upload)</label>
-                  <div className="relative border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-indigo-500 transition-all cursor-pointer group">
-                     <input type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
-                     <Upload className="mx-auto mb-2 text-slate-500 group-hover:text-indigo-400" size={32} />
-                     <p className="text-sm text-slate-400">{audioFile ? audioFile.name : 'Click to upload audio file'}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Transcription Text</label>
-                  <textarea required rows="3" value={newMaterial.text} onChange={e => setNewMaterial({...newMaterial, text: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none" placeholder="Paste the content here..." />
-                </div>
-                <button disabled={isLoading} className="w-full bg-indigo-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all disabled:opacity-50">
-                  {isLoading ? 'Uploading...' : <><Save size={20} /> Upload & Save</>}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleAddStudent} className="space-y-6">
-                <div className="space-y-2"><label className="text-sm text-slate-400">Email</label><input type="email" required value={newStudent.email} onChange={e => setNewStudent({...newStudent, email: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none" /></div>
-                <div className="space-y-2"><label className="text-sm text-slate-400">Password</label><input required value={newStudent.password} onChange={e => setNewStudent({...newStudent, password: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none" /></div>
-                <div className="space-y-4">
-                  <label className="text-sm text-slate-400 block">Section Access</label>
-                  <div className="flex gap-4">
-                    {['English', 'Marathi'].map(lang => (
-                      <label key={lang} className="flex items-center gap-2 cursor-pointer group">
-                        <input 
-                          type="checkbox" 
-                          checked={newStudent.access.includes(lang)}
-                          onChange={(e) => {
-                            const newAccess = e.target.checked 
-                              ? [...newStudent.access, lang]
-                              : newStudent.access.filter(a => a !== lang);
-                            setNewStudent({...newStudent, access: newAccess});
-                          }}
-                          className="w-5 h-5 rounded-md border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="text-sm group-hover:text-white transition-colors">{lang}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <button disabled={isLoading} className="w-full bg-indigo-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all disabled:opacity-50">
-                  {isLoading ? 'Creating...' : <><Plus size={20} /> Create Account</>}
-                </button>
-              </form>
-            )}
-          </motion.div>
+                <select 
+                  value={speedFilter}
+                  onChange={(e) => setSpeedFilter(e.target.value)}
+                  className="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer text-white"
+                >
+                  <option value="" className="bg-slate-900">All Speeds</option>
+                  <option value="30" className="bg-slate-900">30 WPM</option>
+                  <option value="60" className="bg-slate-900">60 WPM</option>
+                  <option value="80" className="bg-slate-900">80 WPM</option>
+                  <option value="90" className="bg-slate-900">90 WPM</option>
+                  <option value="100" className="bg-slate-900">100 WPM</option>
+                  <option value="120" className="bg-slate-900">120 WPM</option>
+                </select>
+              </div>
+            </div>
 
-          {/* List Card */}
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-dark p-8 rounded-3xl border border-white/5 max-h-[700px] overflow-y-auto">
-            <h3 className="text-2xl font-bold mb-8">Current Database</h3>
-            <div className="space-y-4">
-              {activeTab === 'materials' ? (
-                materials.map(m => (
-                  <div key={m._id} className="p-4 bg-white/5 rounded-2xl flex justify-between items-center border border-white/5 hover:bg-white/10 transition-all">
-                    <div>
-                      <h4 className="font-bold">{m.title}</h4>
-                      <p className="text-xs text-slate-500">{m.language} | {m.speed} WPM</p>
-                    </div>
-                    <button onClick={() => deleteItem(m._id, 'material')} className="p-2 text-slate-500 hover:text-red-400"><Trash2 size={18} /></button>
-                  </div>
-                ))
-              ) : (
-                students.map(s => (
-                  <div key={s._id} className="p-4 bg-white/5 rounded-2xl flex justify-between items-center border border-white/5 hover:bg-white/10 transition-all">
-                    <div>
-                        <h4 className="font-bold">{s.email}</h4>
-                        <div className="flex gap-2 mt-1">
-                            {s.access?.map(a => (
-                                <span key={a} className="text-[10px] px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-full border border-indigo-500/20">{a}</span>
-                            ))}
-                        </div>
-                    </div>
-                    <button onClick={() => deleteItem(s._id, 'student')} className="p-2 text-slate-500 hover:text-red-400"><Trash2 size={18} /></button>
-                  </div>
-                ))
-              )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-slate-400 text-sm">
+                    <th className="py-4 px-4 font-bold">Student</th>
+                    <th className="py-4 px-4 font-bold">Material</th>
+                    <th className="py-4 px-4 font-bold">Language</th>
+                    <th className="py-4 px-4 font-bold">Speed</th>
+                    <th className="py-4 px-4 font-bold">Accuracy</th>
+                    <th className="py-4 px-4 font-bold">Mistakes</th>
+                    <th className="py-4 px-4 font-bold">Date & Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLogs.length > 0 ? (
+                    filteredLogs.map(log => (
+                      <tr key={log._id} className="border-b border-white/5 hover:bg-white/5 transition-all text-sm">
+                        <td className="py-4 px-4 font-semibold text-white">{log.student_email}</td>
+                        <td className="py-4 px-4 text-slate-300">{log.material_title}</td>
+                        <td className="py-4 px-4">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${log.language === 'English' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'}`}>
+                            {log.language}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 font-medium text-slate-300">{log.speed} WPM</td>
+                        <td className="py-4 px-4">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${log.accuracy >= 90 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : log.accuracy >= 70 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                            {log.accuracy}%
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 font-mono font-medium text-red-400">{log.mistakes}</td>
+                        <td className="py-4 px-4 text-slate-400 text-xs">
+                          {new Date(log.createdAt).toLocaleString(undefined, { 
+                            dateStyle: 'medium', 
+                            timeStyle: 'short' 
+                          })}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="py-12 text-center text-slate-500">
+                        No progress logs found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </motion.div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Form Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-dark p-8 rounded-3xl border border-white/5 h-fit">
+              <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
+                <Plus className="text-indigo-400" /> {activeTab === 'materials' ? 'New Material' : 'New Student'}
+              </h3>
+
+              {activeTab === 'materials' ? (
+                <form onSubmit={handleAddMaterial} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">Title</label>
+                    <input required value={newMaterial.title} onChange={e => setNewMaterial({...newMaterial, title: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 text-white" placeholder="e.g. Speed Practice #1" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm text-slate-400">Language</label>
+                      <select value={newMaterial.language} onChange={e => setNewMaterial({...newMaterial, language: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none text-white">
+                        <option value="English" className="bg-slate-900">English</option>
+                        <option value="Marathi" className="bg-slate-900">Marathi</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-slate-400">Speed (WPM)</label>
+                      <select value={newMaterial.speed} onChange={e => setNewMaterial({...newMaterial, speed: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none text-white">
+                        <option value="30" className="bg-slate-900">30</option>
+                        <option value="60" className="bg-slate-900">60</option>
+                        <option value="80" className="bg-slate-900">80</option>
+                        <option value="90" className="bg-slate-900">90</option>
+                        <option value="100" className="bg-slate-900">100</option>
+                        <option value="120" className="bg-slate-900">120</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-slate-400">Time Limit (mins)</label>
+                      <input type="number" min="0" value={newMaterial.duration || ''} onChange={e => setNewMaterial({...newMaterial, duration: parseInt(e.target.value, 10) || 0})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 text-white" placeholder="0 for no limit" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">Audio File (Upload)</label>
+                    <div className="relative border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-indigo-500 transition-all cursor-pointer group">
+                       <input type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                       <Upload className="mx-auto mb-2 text-slate-500 group-hover:text-indigo-400" size={32} />
+                       <p className="text-sm text-slate-400">{audioFile ? audioFile.name : 'Click to upload audio file'}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">Transcription Text</label>
+                    <textarea required rows="3" value={newMaterial.text} onChange={e => setNewMaterial({...newMaterial, text: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none text-white" placeholder="Paste the content here..." />
+                  </div>
+                  <button disabled={isLoading} className="w-full bg-indigo-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all disabled:opacity-50">
+                    {isLoading ? 'Uploading...' : <><Save size={20} /> Upload & Save</>}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleAddStudent} className="space-y-6">
+                  <div className="space-y-2"><label className="text-sm text-slate-400">Email</label><input type="email" required value={newStudent.email} onChange={e => setNewStudent({...newStudent, email: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none text-white" /></div>
+                  <div className="space-y-2"><label className="text-sm text-slate-400">Password</label><input required value={newStudent.password} onChange={e => setNewStudent({...newStudent, password: e.target.value})} className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none text-white" /></div>
+                  <div className="space-y-4">
+                    <label className="text-sm text-slate-400 block">Section Access</label>
+                    <div className="flex gap-4">
+                      {['English', 'Marathi'].map(lang => (
+                        <label key={lang} className="flex items-center gap-2 cursor-pointer group">
+                          <input 
+                            type="checkbox" 
+                            checked={newStudent.access.includes(lang)}
+                            onChange={(e) => {
+                              const newAccess = e.target.checked 
+                                ? [...newStudent.access, lang]
+                                : newStudent.access.filter(a => a !== lang);
+                              setNewStudent({...newStudent, access: newAccess});
+                            }}
+                            className="w-5 h-5 rounded-md border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="text-sm group-hover:text-white transition-colors">{lang}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <button disabled={isLoading} className="w-full bg-indigo-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all disabled:opacity-50">
+                    {isLoading ? 'Creating...' : <><Plus size={20} /> Create Account</>}
+                  </button>
+                </form>
+              )}
+            </motion.div>
+
+            {/* List Card */}
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-dark p-8 rounded-3xl border border-white/5 max-h-[700px] overflow-y-auto">
+              <h3 className="text-2xl font-bold mb-8">Current Database</h3>
+              <div className="space-y-4">
+                {activeTab === 'materials' ? (
+                  materials.map(m => (
+                    <div key={m._id} className="p-4 bg-white/5 rounded-2xl flex justify-between items-center border border-white/5 hover:bg-white/10 transition-all">
+                      <div>
+                        <h4 className="font-bold">{m.title}</h4>
+                        <p className="text-xs text-slate-500">{m.language} | {m.speed} WPM</p>
+                      </div>
+                      <button onClick={() => deleteItem(m._id, 'material')} className="p-2 text-slate-500 hover:text-red-400"><Trash2 size={18} /></button>
+                    </div>
+                  ))
+                ) : (
+                  students.map(s => (
+                    <div key={s._id} className="p-4 bg-white/5 rounded-2xl flex justify-between items-center border border-white/5 hover:bg-white/10 transition-all">
+                      <div>
+                          <h4 className="font-bold">{s.email}</h4>
+                          <div className="flex gap-2 mt-1">
+                              {s.access?.map(a => (
+                                  <span key={a} className="text-[10px] px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-full border border-indigo-500/20">{a}</span>
+                              ))}
+                          </div>
+                      </div>
+                      <button onClick={() => deleteItem(s._id, 'student')} className="p-2 text-slate-500 hover:text-red-400"><Trash2 size={18} /></button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );
