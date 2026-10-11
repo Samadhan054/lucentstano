@@ -27,22 +27,37 @@ const AdminDashboard = ({ onLogout }) => {
 
   const fetchData = async () => {
     setIsLoading(true);
+    // Step 1: Ping the status endpoint independently to check if backend is alive
     try {
-      const statusRes = await fetch(`${API_BASE.replace('/api', '/api/status')}`);
-      const statusData = await statusRes.json();
-      setDbMode(statusData.mode);
+      const statusRes = await fetch(`${API_BASE}/status`);
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        setDbMode(statusData.mode);
+        setIsServerUp(true);
+      } else {
+        setIsServerUp(false);
+        setDbMode('Disconnected');
+        setIsLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.error("Backend status check failed:", e);
+      setIsServerUp(false);
+      setDbMode('Disconnected');
+      setIsLoading(false);
+      return;
+    }
 
+    // Step 2: Fetch tab data independently — failures here don't kill the status
+    try {
       const res = await fetch(`${API_BASE}/${activeTab}`);
-      if (!res.ok) throw new Error("Server responded with error");
+      if (!res.ok) throw new Error(`Endpoint /api/${activeTab} responded with ${res.status}`);
       const data = await res.json();
       if (activeTab === 'materials') setMaterials(data);
       else if (activeTab === 'students') setStudents(data);
       else if (activeTab === 'logs') setLogs(data);
-      setIsServerUp(true);
     } catch (e) {
-      console.error("Error fetching data:", e);
-      setIsServerUp(false);
-      setDbMode('Disconnected');
+      console.error(`Error fetching ${activeTab}:`, e);
     } finally {
       setIsLoading(false);
     }
@@ -216,12 +231,11 @@ const AdminDashboard = ({ onLogout }) => {
         <header className="mb-12">
           <h2 className="text-4xl font-bold mb-2">
             System Dashboard 
-            <span className={`text-sm font-bold ml-4 px-3 py-1 rounded-full ${isServerUp ? (dbMode === 'Atlas' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-emerald-500/20 text-emerald-400') : 'bg-red-500/20 text-red-400'}`}>
-              {isServerUp ? `● Online [Mode: ${dbMode}]` : '● Backend Disconnected'}
+            <span className={`text-sm font-bold ml-4 px-3 py-1 rounded-full ${isServerUp ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+              {isServerUp ? `● Online [${dbMode} Mode]` : '● Backend Disconnected'}
             </span>
           </h2>
-          {isServerUp && dbMode === 'File' && <p className="text-emerald-400 mt-2 text-sm font-medium">✨ Network DNS blocked Atlas. Auto-fell back to Local File DB. You can start working!</p>}
-          {!isServerUp && <p className="text-red-400 mt-2 font-bold animate-pulse">Action required: Run "node index.js" in the server folder.</p>}
+          {!isServerUp && <p className="text-red-400 mt-2 font-bold animate-pulse">⚠️ Could not connect to the backend API. Please check your Supabase credentials in Vercel environment variables.</p>}
           <p className="text-slate-400 mt-1">Manage your assets and student access in real-time.</p>
         </header>
 
